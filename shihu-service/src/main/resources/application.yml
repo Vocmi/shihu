@@ -1,0 +1,35 @@
+server:
+  port: 8848
+
+spring:
+  main:
+    #开启依赖循环
+    allow-circular-references: true
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://192.168.101.22:3306/shihu?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password: 111
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
+      password: 123456
+      database: 0
+  cache:
+    type: redis
+  jackson:
+    time-zone: GMT+8
+    date-format: yyyy-MM-dd HH:mm:ss
+  mail:
+    username: vocmi9177@163.com
+    password: HQYCRPQCAASILGMB
+    host: smtp.163.com
+
+mybatis-plus:
+  mapper-locations: classpath*:**/mapper/*Mapper.xml
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    map-underscore-to-camel-case: true
+  type-aliases-package: com.shihu.entity
+
