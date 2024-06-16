@@ -3,6 +3,7 @@ package com.shihu.dto;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import shihu.constant.MessageConstant;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -15,17 +16,17 @@ import java.io.Serializable;
 @Data
 @NoArgsConstructor
 public class UserRegisterDto implements Serializable {
-    @NotBlank
+    @NotBlank(message = MessageConstant.USER_NOT_NULL)
     private String username;
 
-    @NotBlank
+    @NotBlank(message =  MessageConstant.PWD_NOT_NULL)
     private String password;
 
-    @NotBlank
+    @NotBlank(message = MessageConstant.EMAIL_NOT_NULL)
     private String email;
 
-    @NotBlank
-    private String verifyCode;
+    @NotBlank(message = MessageConstant.CODE_NOT_NULL)
+    private String code;
 
     @Serial
     private static final long serialVersionUID = 1L;

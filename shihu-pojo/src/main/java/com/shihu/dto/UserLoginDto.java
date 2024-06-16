@@ -15,12 +15,12 @@ import java.io.Serializable;
  */
 @Data
 @NoArgsConstructor
-public class UserSendCodeDto implements Serializable {
+public class UserLoginDto implements Serializable {
     @NotBlank(message = MessageConstant.USER_NOT_NULL)
     private String username;
 
-    @NotBlank(message = MessageConstant.EMAIL_NOT_NULL)
-    private String email;
+    @NotBlank(message =  MessageConstant.PWD_NOT_NULL)
+    private String password;
 
     @Serial
     private static final long serialVersionUID = 1L;

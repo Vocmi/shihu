@@ -1,11 +1,15 @@
 package com.shihu.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.bean.copier.CopyOptions;
+import cn.hutool.core.lang.UUID;
 import cn.hutool.core.lang.Validator;
 import cn.hutool.core.util.RandomUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.shihu.dto.UserDto;
 import com.shihu.entity.User;
-import com.shihu.service.UserService;
 import com.shihu.mapper.UserMapper;
+import com.shihu.service.UserService;
 import jakarta.annotation.Resource;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -14,6 +18,10 @@ import shihu.constant.EmailConstant;
 import shihu.constant.MessageConstant;
 import shihu.exception.ClientException;
 import com.shihu.util.SendMailUtil;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -65,6 +73,55 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         }
     }
 
+    @Override
+    public void sendEmail(String email) {
+        if (isNotEmail(email)) {
+            throw new ClientException(MessageConstant.EMAIL_INVALID);
+        }
+
+        if (isNotEmailExists(email)) {
+            throw new ClientException(MessageConstant.EMAIL_NOT_REGISTER);
+        }
+
+        String code = RandomUtil.randomNumbers(6);
+        sendMailUtil.sendSimpleMail(EmailConstant.MESSAGE_HEADER, code, EmailConstant.SENDER, email);
+
+        String key = UserCacheKey.EMAIL_CODE.getKey(email, code);
+        stringRedisTemplate.opsForValue().set(key, code, UserCacheKey.EMAIL_CODE.timeout, UserCacheKey.EMAIL_CODE.unit);
+    }
+
+    @Override
+    public void resetPassword(String email, String password, String verifyCode) {
+        if (isNotEmail(email)) {
+            throw new ClientException(MessageConstant.EMAIL_INVALID);
+        }
+
+        String key = UserCacheKey.EMAIL_CODE.getKey(email, verifyCode);
+        if (isNotKeyExist(key)) {
+            throw new ClientException(MessageConstant.CODE_INVALID);
+        }
+    }
+
+    @Override
+    public String getToken(User user) {
+        // 保存用户到redis
+        // 随机生成token作为令牌
+        String token = UUID.randomUUID().toString(true);
+        UserDto userDto = BeanUtil.copyProperties(user, UserDto.class);
+
+        //将User对象转为HashMap存储
+        Map<String, Object> userMap = BeanUtil.beanToMap(userDto, new HashMap<>(),
+                CopyOptions.create()
+                        .setIgnoreNullValue(true)
+                        .setFieldValueEditor((fieldName, fieldValue) -> fieldValue.toString()));
+
+        String tokenKey = UserCacheKey.TOKEN.getKey(token);
+        stringRedisTemplate.opsForHash().putAll(tokenKey, userMap);
+        stringRedisTemplate.expire(tokenKey, UserCacheKey.TOKEN.timeout, TimeUnit.MINUTES);
+
+        return tokenKey;
+    }
+
     private Boolean isKeyExist(String key) {
         return stringRedisTemplate.delete(key);
     }
@@ -73,7 +130,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         return !isKeyExist(key);
     }
 
-    private Boolean isNotEmail(String email) {
+    public boolean isNotEmail(String email) {
         return !Validator.isEmail(email);
     }
 
@@ -95,6 +152,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
                 .exists();
 
         return isExists;
+    }
+
+    public boolean isNotEmailExists(String email) {
+        return !isEmailExists(email);
     }
 }
 
